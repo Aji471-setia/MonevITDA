@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E-Monitoring ITDA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-Mon ITDA">
+    
+    <!-- Manifest Link (Base64 JSON) -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJnameIjogIkUtTW9uaXRvcmluZyBJbnNwZWt0b3JhdCIsCiAgInNob3J0X25hbWUiOiAiRS1Nb24gSVRNQSIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYxNzJhIiwKICAidGhlbWVfY29sb3ciOiAiIzRmNDZlNSIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzI3ODgvMjc4ODgxMC5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIKICAgIH0KICBdCn0=">
+
+    <style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+        
+        #pwa-banner {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            padding: 16px;
+            border-radius: 16px;
+            z-index: 100;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100px); } to { transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-slate-950 font-sans text-slate-200 overflow-hidden">
+
+    <!-- PWA Install Banner -->
+    <div id="pwa-banner" class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-mobile-alt text-2xl"></i>
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider">Pasang Aplikasi</p>
+                <p class="text-[10px] opacity-80">Tambahkan ke layar utama HP Anda</p>
+            </div>
+        </div>
+        <button id="btn-install" class="bg-white text-indigo-600 px-4 py-2 rounded-lg text-[10px] font-black uppercase">Pasang</button>
+    </div>
+
+    <div id="app" class="h-screen flex flex-col">
+        <!-- Auth Screen -->
+        <div id="auth-screen" class="flex-1 flex items-center justify-center p-6">
+            <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+                <div class="text-center mb-8">
+                    <div class="inline-flex bg-indigo-600 p-4 rounded-2xl mb-4 text-white shadow-lg">
+                        <i class="fas fa-shield-halved fa-2x"></i>
+                    </div>
+                    <h1 class="text-2xl font-black tracking-tight text-white uppercase">E-MONITORING</h1>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Inspektorat Kabupaten</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <input type="text" id="username" placeholder="Nama Pengguna" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <input type="password" id="password" placeholder="Kata Sandi" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all uppercase tracking-widest text-sm mt-2">
+                        <i class="fas fa-sign-in-alt"></i> Masuk Sistem
+                    </button>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-slate-800 text-center">
+                    <p class="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-loose">
+                        Versi Web App (PWA) v2.5<br>Mendukung Android & iOS
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="main-screen" class="hidden flex-1 flex flex-col bg-slate-50 text-slate-800 overflow-hidden">
+            <header class="bg-indigo-600 text-white px-6 py-4 flex items-center justify-between shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 p-2 rounded-lg">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h2 id="display-role" class="text-[10px] font-black uppercase opacity-70 leading-none">ADMIN</h2>
+                        <h1 class="text-sm font-black tracking-tight uppercase">E-Monitoring</h1>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="text-white/70 hover:text-white transition-all">
+                    <i class="fas fa-power-off"></i>
+                </button>
+            </header>
+
+            <nav class="bg-white border-b border-slate-200 px-6 py-2 flex gap-4 overflow-x-auto no-scrollbar">
+                <button onclick="switchTab('EKBANG')" class="tab-btn active text-[10px] font-black uppercase py-2 border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap" id="tab-EKBANG">EKBANG</button>
+                <button onclick="switchTab('KESRA')" class="tab-btn text-[10px] font-black uppercase py-2 border-b-2 border-transparent text-slate-400 whitespace-nowrap" id="tab-KESRA">KESRA</button>
+                <button onclick="switchTab('ADUM')" class="tab-btn text-[10px] font-black uppercase py-2 border-b-2 border-transparent text-slate-400 whitespace-nowrap" id="tab-ADUM">ADUM</button>
+                <button onclick="switchTab('INVESTIGASI')" class="tab-btn text-[10px] font-black uppercase py-2 border-b-2 border-transparent text-slate-400 whitespace-nowrap" id="tab-INVESTIGASI">INVESTIGASI</button>
+            </nav>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total ST</p>
+                        <p id="stat-total" class="text-2xl font-black text-slate-800">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Selesai</p>
+                        <p id="stat-selesai" class="text-2xl font-black text-emerald-600">0</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Daftar Penugasan</h3>
+                    <button onclick="exportCSV()" class="text-[9px] font-black uppercase text-indigo-600 flex items-center gap-1">
+                        <i class="fas fa-file-export"></i> Ekspor CSV
+                    </button>
+                </div>
+
+                <div id="data-container" class="space-y-3">
+                    <div class="text-center py-20 text-slate-300 uppercase font-black text-[10px] tracking-[0.3em]">
+                        Tidak ada data
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-add" class="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-xl flex items-center justify-center text-xl transition-transform hover:scale-110 active:scale-95">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let currentUser = null;
+        let currentBidang = 'EKBANG';
+        let dataMock = [
+            { id: 1, bidang: 'EKBANG', nomor: 'ST/001/2026', objek: 'Dinas Pertanian', status: 'LHP Terbit', progres: 100 },
+            { id: 2, bidang: 'EKBANG', nomor: 'ST/005/2026', objek: 'Kecamatan Banyuasin', status: 'Pelaksanaan', progres: 40 },
+            { id: 3, bidang: 'KESRA', nomor: 'ST/012/2026', objek: 'RSUD Kabupaten', status: 'Perencanaan', progres: 10 }
+        ];
+
+        // UI Handlers
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (user && pass) {
+                currentUser = { username: user, role: user === 'admin' ? 'ADMIN' : 'USER' };
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-screen').classList.remove('hidden');
+                document.getElementById('display-role').innerText = currentUser.role;
+                renderData();
+            } else {
+                alert('Silakan masukkan nama pengguna dan kata sandi.');
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-screen').classList.add('hidden');
+        }
+
+        function switchTab(bidang) {
+            currentBidang = bidang;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-indigo-600', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-slate-400');
+            });
+            const activeBtn = document.getElementById(`tab-${bidang}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'border-indigo-600', 'text-indigo-600');
+                activeBtn.classList.remove('border-transparent', 'text-slate-400');
+            }
+            renderData();
+        }
+
+        function renderData() {
+            const container = document.getElementById('data-container');
+            const filtered = dataMock.filter(d => d.bidang === currentBidang);
+            
+            document.getElementById('stat-total').innerText = filtered.length;
+            document.getElementById('stat-selesai').innerText = filtered.filter(f => f.progres === 100).length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-slate-300 uppercase font-black text-[10px] tracking-[0.3em]">Tidak ada data di bidang ini</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => `
+                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="text-[9px] font-mono text-slate-400 uppercase">${item.nomor}</p>
+                            <h4 class="text-sm font-black text-slate-800 uppercase">${item.objek}</h4>
+                        </div>
+                        <span class="text-[8px] font-black px-2 py-0.5 rounded-full ${item.progres === 100 ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'} uppercase">
+                            ${item.status}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-indigo-500 transition-all duration-1000" style="width: ${item.progres}%"></div>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-400">${item.progres}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportCSV() {
+            const rows = [
+                ["No", "Nomor ST", "Objek", "Status", "Progres"],
+                ...dataMock.filter(d => d.bidang === currentBidang).map((d, i) => [i+1, d.nomor, d.objek, d.status, d.progres])
+            ];
+            let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `laporan_${currentBidang.toLowerCase()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // PWA Install Logic
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwa-banner').style.display = 'flex';
+        });
+
+        document.getElementById('btn-install').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('pwa-banner').style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+    </script>
+</body>
+</html>
